@@ -117,15 +117,9 @@ def create_word_table(tables):
 
             # 填充数据
             for column in table['columns']:
-                column_name = column.get('column_name', '')
-                column_type = column.get('column_type', '')
 
-                # 使用正则表达式检查是否为主键或索引
-                isPrimaryKey = (re.match(r'(PRIMARY|primary)', column_name) and
-                                re.match(r'(KEY|key)', column_type))
-
-                # 如果是主键或索引，跳过当前列
-                if isPrimaryKey:
+                # 检查特殊情况
+                if check_legal(column):
                     continue
 
                 row_cells = word_table.add_row().cells
@@ -142,6 +136,43 @@ def create_word_table(tables):
 
     # 显示转换结果
     messagebox.showinfo("完成", f"转换完成！文件已保存至: {word_file_path}")
+
+def check_legal(column):
+    column_name = column.get('column_name', '')
+    column_type = column.get('column_type', '')
+
+    # 检查是否为主键或索引
+    is_primary_key = (re.match(r'(PRIMARY|primary)', column_name) and
+                    re.match(r'(KEY|key)', column_type))
+
+    # 检查 Unique index
+    is_unique_index = (re.match(r'(UNIQUE|unique)', column_name) and
+                       re.match(r'(INDEX|index)', column_type))
+
+    # 检查外键
+    is_foreign_key = (re.match(r'(FOREIGN|foreign)', column_name) and
+                      re.match(r'(KEY|key)', column_type))
+
+    # 普通索引
+    is_index = (re.match(r'(INDEX|index)', column_name))
+
+    # 全文索引
+    is_fulltext = (re.match(r'(FULLTEXT|fulltext)', column_name))
+
+    # 检查约束
+    is_check = (re.match(r'(CHECK|check)', column_name))
+
+    # 自动递增
+    is_auto_increment = (re.match(r'(AUTO_INCREMENT|autoincrement|auto_increment)', column_name))
+
+    # 字段默认值
+    is_default = (re.match(r'(DEFAULT|default)', column_name))
+
+    # 如果是主键或索引，跳过当前列
+    if is_primary_key or is_unique_index or is_foreign_key or is_index or is_fulltext or is_check or is_auto_increment or is_default:
+        return True
+
+    return False
 
 # 按钮回调函数
 def on_select_file():
